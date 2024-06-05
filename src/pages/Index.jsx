@@ -2,9 +2,13 @@ import { Container, Text, VStack, Box, Flex, Spacer, IconButton, useBreakpointVa
 import { useState } from "react";
 import { supabase } from "../integrations/supabase/index.js";
 import { FaHome, FaInfoCircle, FaPhone } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useSupabaseAuth } from "../integrations/supabase/auth.jsx";
 
 const Index = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const navigate = useNavigate();
+  const { session } = useSupabaseAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,7 +18,11 @@ const Index = () => {
     e.preventDefault();
     setError(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
+    if (error) {
+      setError(error.message);
+    } else {
+      navigate("/authenticated");
+    }
   };
 
   return (
@@ -39,22 +47,26 @@ const Index = () => {
         <VStack spacing={4}>
           <Text fontSize="2xl">Your Blank Canvas</Text>
           <Text>Chat with the agent to start making edits.</Text>
-        <Box width="100%" p={4} borderWidth={1} borderRadius="lg">
-            <form onSubmit={handleLogin}>
-              <VStack spacing={4}>
-                <FormControl id="email" isRequired>
-                  <FormLabel>Email</FormLabel>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </FormControl>
-                <FormControl id="password" isRequired>
-                  <FormLabel>Password</FormLabel>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                </FormControl>
-                {error && <Text color="red.500">{error}</Text>}
-                <Button type="submit" colorScheme="blue" width="full">Login</Button>
-              </VStack>
-            </form>
-          </Box>
+        {!session ? (
+            <Box width="100%" p={4} borderWidth={1} borderRadius="lg">
+              <form onSubmit={handleLogin}>
+                <VStack spacing={4}>
+                  <FormControl id="email" isRequired>
+                    <FormLabel>Email</FormLabel>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </FormControl>
+                  <FormControl id="password" isRequired>
+                    <FormLabel>Password</FormLabel>
+                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </FormControl>
+                  {error && <Text color="red.500">{error}</Text>}
+                  <Button type="submit" colorScheme="blue" width="full">Login</Button>
+                </VStack>
+              </form>
+            </Box>
+          ) : (
+            <Text>You are already logged in. Go to the <a href="/authenticated">authenticated content</a>.</Text>
+          )}
         </VStack>
       </Container>
     </Container>
